@@ -334,7 +334,7 @@ The following methods of Numpy arrays are supported:
 
 * :meth:`~numpy.ndarray.transpose`
 * :meth:`~numpy.ndarray.view` (only the 1-argument form)
-* :meth:`~numpy.ndarray.__contains__` 
+* :meth:`~numpy.ndarray.__contains__`
 
 Where applicable, the corresponding top-level NumPy functions (such as
 :func:`numpy.argmax`) are similarly supported.
@@ -508,7 +508,8 @@ The following top-level functions are supported:
   can only contain arrays (unlike Numpy that also accepts tuples).
 * :func:`numpy.shape`
 * :func:`numpy.sinc`
-* :func:`numpy.sort` (no optional arguments)
+* :func:`numpy.sort` (no optional arguments, quicksort accepts
+  multi-dimensional array and sorts its last axis).
 * :func:`numpy.split`
 * :func:`numpy.stack`
 * :func:`numpy.swapaxes`
@@ -655,7 +656,7 @@ Permutations
 Distributions
 '''''''''''''
 
-The following functions support all arguments. 
+The following functions support all arguments.
 
 * :func:`numpy.random.beta`
 * :func:`numpy.random.binomial`
