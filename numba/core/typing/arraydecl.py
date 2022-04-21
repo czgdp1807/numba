@@ -417,25 +417,49 @@ class ArrayAttribute(AttributeTemplate):
     @bound_function("array.sort")
     def resolve_sort(self, ary, args, kws):
         assert not args
-        assert not kws
-        return signature(types.none)
+        kwargs = dict(kws)
+
+        axis = kwargs.pop('axis', types.IntegerLiteral(-1))
+        if not isinstance(axis, types.IntegerLiteral):
+            raise TypingError('"axis" must be an integer literal')
+
+        kind = kwargs.pop('kind', types.StringLiteral('quicksort'))
+        if not isinstance(kind, types.StringLiteral):
+            raise TypingError('"kind" must be a string literal')
+
+        if kwargs:
+            msg = "Unsupported keywords: {!r}"
+            raise TypingError(msg.format([k for k in kwargs.keys()]))
+
+        def sort_stub(axis=-1, kind='quicksort'):
+            pass
+        pysig = utils.pysignature(sort_stub)
+        sig = signature(types.none, axis, kind).replace(pysig=pysig)
+        return sig
 
     @bound_function("array.argsort")
     def resolve_argsort(self, ary, args, kws):
         assert not args
         kwargs = dict(kws)
+
+        axis = kwargs.pop('axis', types.IntegerLiteral(-1))
+        if not isinstance(axis, types.IntegerLiteral):
+            raise TypingError('"axis" must be an integer literal')
+
+
         kind = kwargs.pop('kind', types.StringLiteral('quicksort'))
         if not isinstance(kind, types.StringLiteral):
             raise TypingError('"kind" must be a string literal')
+
         if kwargs:
             msg = "Unsupported keywords: {!r}"
             raise TypingError(msg.format([k for k in kwargs.keys()]))
-        if ary.ndim == 1:
-            def argsort_stub(kind='quicksort'):
-                pass
-            pysig = utils.pysignature(argsort_stub)
-            sig = signature(types.Array(types.intp, 1, 'C'), kind).replace(pysig=pysig)
-            return sig
+
+        def argsort_stub(axis=-1, kind='quicksort'):
+            pass
+        pysig = utils.pysignature(argsort_stub)
+        sig = signature(types.Array(types.intp, ary.ndim, 'C'), axis, kind).replace(pysig=pysig)
+        return sig
 
     @bound_function("array.view")
     def resolve_view(self, ary, args, kws):

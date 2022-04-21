@@ -393,7 +393,7 @@ class Numpy_method_redirection(AbstractTemplate):
                         pass
                     pysig = utils.pysignature(sum_stub)
             elif self.method_name == 'argsort':
-                def argsort_stub(arr, kind='quicksort'):
+                def argsort_stub(arr, axis=-1, kind='quicksort'):
                     pass
                 pysig = utils.pysignature(argsort_stub)
             else:
