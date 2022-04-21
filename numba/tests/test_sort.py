@@ -723,7 +723,6 @@ class TestQuicksortMultidimensionalArrays(BaseSortingTest, TestCase):
 
     def assertSorted(self, orig, result, last_index=None):
         # sorted() returns a list, so make sure we compare to another list
-        print("orig: ", orig, "result: ", result)
         if last_index is not None:
             self.assertTrue((orig == result[0][:last_index]).all())
         else:
