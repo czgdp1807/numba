@@ -26,7 +26,7 @@ SMALL_QUICKSORT = 15
 MAX_STACK = 100
 
 
-def make_quicksort_impl(wrap, lt=None, is_argsort=False, is_list=False, is_np_array=False, axis=-1):
+def make_quicksort_impl(wrap, lt=None, is_argsort=False, is_list=False, is_np_array=False, axis=-1, ndim=1):
 
     intp = types.intp
     zero = intp(0)
@@ -198,57 +198,25 @@ def make_quicksort_impl(wrap, lt=None, is_argsort=False, is_list=False, is_np_ar
 
         return R
 
-    @wrap
-    def run_quicksort1_multidim(A):
-        R = make_res(A)
-
-        if len(A) < 2:
-            return R
-
-        stack = [Partition(zero, zero)] * MAX_STACK
-        stack[0] = Partition(zero, len(A) - 1)
-        n = 1
-
-        while n > 0:
-            n -= 1
-            low, high = stack[n]
-            # Partition until it becomes more efficient to do an insertion sort
-            while high - low >= SMALL_QUICKSORT:
-                assert n < MAX_STACK
-                i = partition(A, R, low, high)
-                # Push largest partition on the stack
-                if high - i > i - low:
-                    # Right is larger
-                    if high > i:
-                        stack[n] = Partition(i + 1, high)
-                        n += 1
-                    high = i - 1
-                else:
-                    if i > low:
-                        stack[n] = Partition(low, i - 1)
-                        n += 1
-                    low = i + 1
-
-            insertion_sort(A, R, low, high)
-
-        return R
+    quicksort_func = None
 
     if is_np_array:
         if axis == -1:
             @wrap
-            def run_quicksort(A, axis):
+            def run_quicksort(A):
                 if A.ndim == 1:
                     return run_quicksort1(A)
                 elif axis == -1:
                     for idx in np.ndindex(A.shape[:-1]):
                         run_quicksort1(A[idx])
                     return A
+            quicksort_func = run_quicksort
         else:
-            @wrap
-            def run_quicksort(A, axis):
-                if A.ndim == 1:
-                    return run_quicksort1(A)
-                else:
+            if ndim == 1:
+                quicksort_func = run_quicksort1
+            else:
+                @wrap
+                def run_quicksort(A, axis):
                     axis = axis if axis >= 0 else A.ndim + axis
                     axis_at_last = A.shape
                     j = 0
@@ -262,10 +230,9 @@ def make_quicksort_impl(wrap, lt=None, is_argsort=False, is_list=False, is_np_ar
                         run_quicksort1(A_new[idx])
                     A = A_new.transpose(axis_at_last)
                     return A
+                quicksort_func = run_quicksort
     else:
-        @wrap
-        def run_quicksort(A, axis):
-            return run_quicksort1(A)
+        quicksort_func = run_quicksort1
 
     # Unused quicksort implementation based on 3-way partitioning; the
     # partitioning scheme turns out exhibiting bad behaviour on sorted arrays.
@@ -303,7 +270,7 @@ def make_quicksort_impl(wrap, lt=None, is_argsort=False, is_list=False, is_np_ar
 
     return QuicksortImplementation(wrap,
                                    partition, partition3, insertion_sort,
-                                   run_quicksort)
+                                   quicksort_func)
 
 
 def make_py_quicksort(*args, **kwargs):
