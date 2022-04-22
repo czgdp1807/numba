@@ -5606,6 +5606,8 @@ def array_sort(context, builder, sig, args):
 
     array_sort_impl_func = None
 
+    print("axis: ", axis.literal_value)
+    print("arytype.key[1]: ", arytype.key[1])
     if axis.literal_value == -1 or arytype.key[1] == 1:
         def array_sort_impl(arr):
             # Note we clobber the return value

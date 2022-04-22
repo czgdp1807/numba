@@ -200,13 +200,14 @@ def make_quicksort_impl(wrap, lt=None, is_argsort=False, is_list=False, is_np_ar
 
     quicksort_func = None
 
+    print("condition vars: ", is_np_array, axis, ndim)
     if is_np_array:
         if axis == -1:
             @wrap
             def run_quicksort(A):
                 if A.ndim == 1:
                     return run_quicksort1(A)
-                elif axis == -1:
+                else:
                     for idx in np.ndindex(A.shape[:-1]):
                         run_quicksort1(A[idx])
                     return A
