@@ -5654,12 +5654,12 @@ def array_argsort(context, builder, sig, args):
     if axis.literal_value == -1 or arytype.key[1] == 1:
         def array_argsort_impl(arr):
             # Note we clobber the return value
-            sort_func(arr)
+            return sort_func(arr)
         array_argsort_impl_func = array_argsort_impl
     else:
         def array_argsort_impl(arr):
             # Note we clobber the return value
-            sort_func(arr, axis.literal_value)
+            return sort_func(arr, axis.literal_value)
         array_argsort_impl_func = array_argsort_impl
 
     innersig = sig.replace(args=sig.args[:1])
