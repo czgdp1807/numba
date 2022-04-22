@@ -1,4 +1,6 @@
 import collections
+from turtle import shape
+from numba.cpython.unsafe.tuple import tuple_setitem
 
 import numpy as np
 
@@ -24,7 +26,7 @@ SMALL_QUICKSORT = 15
 MAX_STACK = 100
 
 
-def make_quicksort_impl(wrap, lt=None, is_argsort=False, is_list=False, is_np_array=False):
+def make_quicksort_impl(wrap, lt=None, is_argsort=False, is_list=False, is_np_array=False, axis=-1):
 
     intp = types.intp
     zero = intp(0)
@@ -196,18 +198,73 @@ def make_quicksort_impl(wrap, lt=None, is_argsort=False, is_list=False, is_np_ar
 
         return R
 
+    @wrap
+    def run_quicksort1_multidim(A):
+        R = make_res(A)
+
+        if len(A) < 2:
+            return R
+
+        stack = [Partition(zero, zero)] * MAX_STACK
+        stack[0] = Partition(zero, len(A) - 1)
+        n = 1
+
+        while n > 0:
+            n -= 1
+            low, high = stack[n]
+            # Partition until it becomes more efficient to do an insertion sort
+            while high - low >= SMALL_QUICKSORT:
+                assert n < MAX_STACK
+                i = partition(A, R, low, high)
+                # Push largest partition on the stack
+                if high - i > i - low:
+                    # Right is larger
+                    if high > i:
+                        stack[n] = Partition(i + 1, high)
+                        n += 1
+                    high = i - 1
+                else:
+                    if i > low:
+                        stack[n] = Partition(low, i - 1)
+                        n += 1
+                    low = i + 1
+
+            insertion_sort(A, R, low, high)
+
+        return R
+
     if is_np_array:
-        @wrap
-        def run_quicksort(A):
-            if A.ndim == 1:
-                return run_quicksort1(A)
-            else:
-                for idx in np.ndindex(A.shape[:-1]):
-                    run_quicksort1(A[idx])
-                return A
+        if axis == -1:
+            @wrap
+            def run_quicksort(A, axis):
+                if A.ndim == 1:
+                    return run_quicksort1(A)
+                elif axis == -1:
+                    for idx in np.ndindex(A.shape[:-1]):
+                        run_quicksort1(A[idx])
+                    return A
+        else:
+            @wrap
+            def run_quicksort(A, axis):
+                if A.ndim == 1:
+                    return run_quicksort1(A)
+                else:
+                    axis = axis if axis >= 0 else A.ndim + axis
+                    axis_at_last = A.shape
+                    j = 0
+                    for i in range(A.ndim):
+                        if i != axis:
+                            axis_at_last = tuple_setitem(axis_at_last, j, i)
+                            j += 1
+                    axis_at_last = tuple_setitem(axis_at_last, j, axis)
+                    A_new = A.transpose(axis_at_last)
+                    for idx in np.ndindex(A_new.shape[:-1]):
+                        run_quicksort1(A_new[idx])
+                    A = A_new.transpose(axis_at_last)
+                    return A
     else:
         @wrap
-        def run_quicksort(A):
+        def run_quicksort(A, axis):
             return run_quicksort1(A)
 
     # Unused quicksort implementation based on 3-way partitioning; the
